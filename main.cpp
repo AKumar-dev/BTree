@@ -34,22 +34,29 @@ struct BNode{
 
     }*/
     // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
+    void printNode(){
+        for(int i = 0; i < countK; ++i){
+            cout << "link: " << (links[i]? "valid" : "nullptr") << endl;
+            cout << "val: " << keys[i] << endl;
+        }
+        cout << "link: " << (links[countK]? "valid" : "nullptr") << endl;
+    }
     BNode(){
         countK = 0;
         countL = 0;
         keys = new int[4];
         links = new int*[5];
-        for(int i = 0; i < 6; ++i)
-            links[i] = nullptr;
+        for(int i = 0; i < 5; ++i)
+             links[i] = nullptr;
     }
-    // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
+    
     BNode(int val){
-        countK = 2;
-        countL = 1;
+        countK = 1;
+        countL = 2;
         keys = new int[4];
         keys[0] = val;
         links = new int*[5];
-        for(int i = 0; i < 6; ++i)
+        for(int i = 0; i < 5; ++i)
             links[i] = nullptr;
     }
     ~BNode(){
@@ -59,7 +66,14 @@ struct BNode{
 };
 
 int main(){
+    BNode one(15);
+    BNode two(20);
+    BNode three;
 
-
+    one.printNode();
+    cout << endl;
+    two.printNode();
+    cout << endl;
+    three.printNode();
     return 0;
 }
