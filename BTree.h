@@ -1,0 +1,5 @@
+class BTree{
+	struct BNode{
+	
+	};
+};
