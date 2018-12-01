@@ -3,7 +3,7 @@
 
 using namespace std;
 
-template<int M = 5>
+template<typename T, int M = 5>
 class BTree{
   public:
 	enum CODE{NOT_FOUND, SUCCESS, DUPLICATE, OVERFLOW};
@@ -12,22 +12,22 @@ class BTree{
 	struct BNode{
 		int countL;     // count of links
 		int countK;     // count of keys
-		int *keys;      // the size of this is M (M = order)
+		T *keys;      // the size of this is M (M = order)
 		BNode* *links;    // the size of this is M + 1
 
 		BNode(){	// default constructor
 			countK = 0;
 			countL = 0;
-			keys = new int[M];
+			keys = new T[M];
 			links = new BNode*[M+1];
 			for(int i = 0; i <= M; ++i)	// intialize links to nullptr
 				links[i] = nullptr;
 		}
 		
-		BNode(int val){	// for creating a BNode with a single value
+		BNode(T val){	// for creating a BNode with a single value
 			countK = 1;
 			countL = 2;
-			keys = new int[M];
+			keys = new T[M];
 			keys[0] = val;
 			links = new BNode*[M+1];
 			for(int i = 0; i <= M; ++i)	// initialize links to nullptr
@@ -39,19 +39,19 @@ class BTree{
 		}		
 		
 		// add/insert a value into a BNode
-		tuple<BNode*,int,CODE> add(const int &val){
+		tuple<BNode*,int,CODE> add(const T &val){
 			// if the node is empty, insert val and return success
 			if(!countK){
 				keys[0] = val;
 				++countK;
-				return tuple<BNode*,int,CODE>(nullptr, val, CODE::SUCCESS);
+				return tuple<BNode*,T,CODE>(nullptr, val, CODE::SUCCESS);
 			}
 			// else, insert the value in proper location
 			else{
 				// checks for duplicate so we don't waste time shifting elements if duplicate exists
 				for(int i = 0; i < countK; ++i){
 					if(keys[i] == val)
-						return tuple<BNode*,int,CODE>(nullptr, val, CODE::DUPLICATE);
+						return tuple<BNode*,T,CODE>(nullptr, val, CODE::DUPLICATE);
 				}
 				int index = countK;
 
@@ -65,13 +65,14 @@ class BTree{
 
 				// if overflow happens, return OVERFLOW so we can call 'split'
 				if(countK == M)
-					return tuple<BNode*,int,CODE>(nullptr, val, CODE::OVERFLOW);
+					return tuple<BNode*,T,CODE>(nullptr, val, CODE::OVERFLOW);
 
-				return tuple<BNode*,int,CODE>(nullptr, val, CODE::SUCCESS);
+				return tuple<BNode*,T,CODE>(nullptr, val, CODE::SUCCESS);
         	}
     	}
     
-		tuple<BNode*,int,CODE> split(){
+		// used to split a node in half when overflow happens
+		tuple<BNode*,T,CODE> split(){
 			int median = countK/2;
 			int index = median + 1;
 			int oldCount = countK;
@@ -87,17 +88,14 @@ class BTree{
 			
 			// copies over the remaining values
 			while(index < oldCount){
-				right->links[right->countL] = links[index + 1];         // OPTIMIZE THIS LATER WITH COUNT++
-				right->keys[right->countK] = keys[index];               // OPTIMIZE THIS LATER WITH COUNT++
-				++right->countK;
-				++right->countL;
-				links[index + 1] = nullptr;
+				right->links[(right->countL)++] = links[index + 1];
+				right->keys[(right->countK)++] = keys[index];
+				links[++index] = nullptr;
 				--countL;
 				--countK;
-				++ index;
 			}
-			--countK;
-			return tuple<BNode*,int,CODE>(right, keys[median], CODE::SUCCESS);
+			--countK; // because median was removed
+			return tuple<BNode*,T,CODE>(right, keys[median], CODE::SUCCESS);
 		}
 
 		/*
@@ -117,35 +115,39 @@ class BTree{
 
 	BNode* root;
 	size_t sz;
-	tuple<BNode*, int, CODE> insert(BNode*, const int&);
-	tuple<BNode*, int, CODE> remove(BNode*, const int&);	// using immediate successor
+	tuple<BNode*, T, CODE> insert(BNode*, const T&);
+	tuple<BNode*, T, CODE> remove(BNode*, const T&);	// using immediate successor
 
   public:
-	// default constructor
 	BTree();
-	
-	// explicit constructor
-	BTree(const int&);
-	
+	BTree(const T&);
 	// copy constructor and operator= here if you get time
-	void printTree();	// Breadth First Traversal, using queue
-	CODE insert(const int&);
+	~BTree();
+
+	void printTree();
+	CODE insert(const T&);
 };
 
 
 /////////////////////////////////		PRIVATE METHODS		  /////////////////////////////////////
 
-template <int M>
-tuple<typename BTree<M>::BNode*, int, typename BTree<M>::CODE> BTree<M>::insert(BNode* node, const int& val){
+template <typename T, int M>
+tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::insert(BNode* node, const T& val){
 
 }
 
 /////////////////////////////////		PUBLIC METHODS		  /////////////////////////////////////
 
-template <int M>
-BTree<M>::BTree():root{nullptr},sz{0}{}
+template <typename T, int M>
+BTree<T,M>::BTree():root{nullptr},sz{0}{}
 
-template <int M>
-BTree<M>::BTree(const int& val):sz{1}{
+template <typename T, int M>
+BTree<T,M>::BTree(const T& val):sz{1}{
 	root = new BNode(val);
+}
+
+template <typename T, int M>
+BTree<T,M>::~BTree(){
+	// need to make this a traversal, and delete individual nodes
+	delete root;
 }

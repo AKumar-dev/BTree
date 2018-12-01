@@ -1,15 +1,14 @@
 #include <fstream>
 #include <cstdlib>  // for srand, rand, and time
-
 #include "BTree.h"
 
 using namespace std;
 
-
-// used to indicate outcome of a BNode operation
-
+// MIGHT HAVE TO FIX SOME OF THE DESTRUCTOR STUFF, CHECK VALGRIND
 int main(){
     cout << endl;
+
+    BTree<int, 5> temp(10);
 
     /*// FOR CHECKING IF ADD FUNCTION WORKS
 
@@ -29,6 +28,7 @@ int main(){
     */
 
     /*// FOR CHECKING IF SPLIT FUNCTION WORKS 
+
     BNode<6> temp;
     BNode<6> *root;
     for(int i = 0; i <= 10; ++i){
@@ -51,6 +51,9 @@ int main(){
     cout << endl;
     root->links[1]->printNode();
     */
+
+
+
 
     return 0;
 }
