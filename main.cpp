@@ -3,8 +3,6 @@
 #include <cstdlib>  // for srand, rand, and time
 #include <iostream>
 
-using BTuple = tuple<BNode<>*,int,CODE>;
-
 using namespace std;
 
 enum CODE{NOT_FOUND, SUCCESS, DUPLICATE, OVERFLOW};
@@ -14,23 +12,23 @@ struct BNode{
     int countL;     // count of links
     int countK;     // count of keys
     int *keys;      // the size of this is M (M = order)
-    int* *links;    // the size of this is M + 1
+    BNode* *links;    // the size of this is M + 1
 
 // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
     // add/insert a value into a BNode
-    BTuple add(const int &val){
+    tuple<BNode*,int,CODE> add(const int &val){
         // if the node is empty, insert val and return success
         if(!countK){
             keys[0] = val;
             ++countK;
-            return BTuple(nullptr, val, CODE::SUCCESS);
+            return tuple<BNode*,int,CODE>(nullptr, val, CODE::SUCCESS);
         }
         // else, insert the value in proper location
         else{
             // checks for duplicate so we don't waste time shifting elements if duplicate exists
             for(int i = 0; i < countK; ++i){
                 if(keys[i] == val)
-                    return BTuple(nullptr, val, CODE::DUPLICATE);
+                    return tuple<BNode*,int,CODE>(nullptr, val, CODE::DUPLICATE);
             }
             int index = countK;
 
@@ -44,21 +42,21 @@ struct BNode{
 
              // if overflow happens, return OVERFLOW so we can call 'split'
             if(countK == M)
-                return BTuple(nullptr, val, CODE::OVERFLOW);
+                return tuple<BNode*,int,CODE>(nullptr, val, CODE::OVERFLOW);
 
-            return BTuple(nullptr, val, CODE::SUCCESS);
+            return tuple<BNode*,int,CODE>(nullptr, val, CODE::SUCCESS);
         }
     }
     
     
     // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
-    BTuple split(){
+    tuple<BNode*,int,CODE> split(){
         int median = countK/2;
         int index = median + 1;
         int oldCount = countK;
 
         // new node that data past the median will be copied into
-        BNode right = new BNode;
+        BNode* right = new BNode;
         
         // copies over the first link, so in the future when we copy a key we only have to copy the right side link
         right->links[0] = links[index];
@@ -78,12 +76,12 @@ struct BNode{
             ++ index;
         }
         --countK;
-        return BTuple(right, keys[median], CODE::SUCCESS);
+        return tuple<BNode*,int,CODE>(right, keys[median], CODE::SUCCESS);
     }
 
     /*
     // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
-    BTuple<M> merge(){
+    tuple<BNode*,int,CODE><M> merge(){
 
     }*/
 
@@ -98,7 +96,7 @@ struct BNode{
         countK = 0;
         countL = 0;
         keys = new int[M];
-        links = new int*[M+1];
+        links = new BNode*[M+1];
         for(int i = 0; i <= M; ++i)
              links[i] = nullptr;
     }
@@ -108,7 +106,7 @@ struct BNode{
         countL = 2;
         keys = new int[M];
         keys[0] = val;
-        links = new int*[M+1];
+        links = new BNode*[M+1];
         for(int i = 0; i <= M; ++i)
             links[i] = nullptr;
     }
@@ -143,21 +141,23 @@ int main(){
     BNode<5> temp;
     BNode<5> *root;
     for(int i = 0; i <= 10; ++i){
-        BTuple result = temp.add(i);
-        /*if(get<2>(result) == CODE::OVERFLOW){
+        tuple<BNode<5>*,int,CODE> result = temp.add(i);
+        if(get<2>(result) == CODE::OVERFLOW){
             root = new BNode<5>;
             result = temp.split();
             root->keys[0] = get<1>(result);
-            root->links[0] = temp;
+            root->links[0] = &temp;
             root->links[1] = get<0>(result);
             ++root->countK;
             ++root->countL;
             break;
-        }*/
+        }
     }
 
     root->printNode();
+    cout << endl;
     root->links[0]->printNode();
+    cout << endl;
     root->links[1]->printNode();
 
     return 0;
