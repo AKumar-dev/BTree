@@ -1,9 +1,9 @@
-#include <iostream>
 #include <fstream>
 #include <tuple>
-#include <cstdlib>
+#include <cstdlib>  // for srand, rand, and time
+#include <iostream>
 
-#define Btuple tuple<BNode*,int,CODE>
+using BTuple = tuple<BNode<>*,int,CODE>;
 
 using namespace std;
 
@@ -11,47 +11,79 @@ enum CODE{NOT_FOUND, SUCCESS, DUPLICATE, OVERFLOW};
 
 template<int M = 5>
 struct BNode{
-    int countL;
-    int countK;
-    int *keys;      // the size of this is 1 greater than (M-1)
-    int* *links;    // the size of this is 1 greater than M
-
+    int countL;     // count of links
+    int countK;     // count of keys
+    int *keys;      // the size of this is M (M = order)
+    int* *links;    // the size of this is M + 1
 
 // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
-    Btuple add(const int &val){
+    // add/insert a value into a BNode
+    BTuple add(const int &val){
+        // if the node is empty, insert val and return success
         if(!countK){
             keys[0] = val;
             ++countK;
-            return Btuple(nullptr, val, CODE::SUCCESS);
+            return BTuple(nullptr, val, CODE::SUCCESS);
         }
+        // else, insert the value in proper location
         else{
+            // checks for duplicate so we don't waste time shifting elements if duplicate exists
             for(int i = 0; i < countK; ++i){
                 if(keys[i] == val)
-                    return Btuple(nullptr, val, CODE::DUPLICATE);
-            } // checks for duplicates
-
+                    return BTuple(nullptr, val, CODE::DUPLICATE);
+            }
             int index = countK;
+
+            // shift over all the values that are smaller, and after loop insert val
             while(index > 0 && keys[index-1] > val){
                 keys[index] = keys[index - 1];
                 --index;
-            } // shifts over all the values that are smaller
-
+            }
             keys[index] = val;
             ++countK;
 
-            if(countK == M) // if overflow happened
-                return Btuple(nullptr, val, CODE::OVERFLOW);
-            return Btuple(nullptr, val, CODE::SUCCESS);
+             // if overflow happens, return OVERFLOW so we can call 'split'
+            if(countK == M)
+                return BTuple(nullptr, val, CODE::OVERFLOW);
+
+            return BTuple(nullptr, val, CODE::SUCCESS);
         }
     }
     
-    /*
+    
     // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
     BTuple split(){
+        int median = countK/2;
+        int index = median + 1;
+        int oldCount = countK;
 
+        // new node that data past the median will be copied into
+        BNode right = new BNode;
+        
+        // copies over the first link, so in the future when we copy a key we only have to copy the right side link
+        right->links[0] = links[index];
+        ++right->countL;
+        links[index] = nullptr;
+        --countL;
+        
+        // copies over the remaining values
+        while(index < oldCount){
+            right->links[right->countL] = links[index + 1];         // OPTIMIZE THIS LATER WITH COUNT++
+            right->keys[right->countK] = keys[index];               // OPTIMIZE THIS LATER WITH COUNT++
+            ++right->countK;
+            ++right->countL;
+            links[index + 1] = nullptr;
+            --countL;
+            --countK;
+            ++ index;
+        }
+        --countK;
+        return BTuple(right, keys[median], CODE::SUCCESS);
     }
+
+    /*
     // TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
-    BTuple merge(){
+    BTuple<M> merge(){
 
     }*/
 
@@ -86,10 +118,10 @@ struct BNode{
     }
 };
 
+// used to indicate outcome of a BNode operation
+
 int main(){
-    
     cout << endl;
-    
 
     /* FOR CHECKING IF ADD FUNCTION WORKS
 
@@ -107,6 +139,26 @@ int main(){
         cout << endl;        
     }
     */
+
+    BNode<5> temp;
+    BNode<5> *root;
+    for(int i = 0; i <= 10; ++i){
+        BTuple result = temp.add(i);
+        /*if(get<2>(result) == CODE::OVERFLOW){
+            root = new BNode<5>;
+            result = temp.split();
+            root->keys[0] = get<1>(result);
+            root->links[0] = temp;
+            root->links[1] = get<0>(result);
+            ++root->countK;
+            ++root->countL;
+            break;
+        }*/
+    }
+
+    root->printNode();
+    root->links[0]->printNode();
+    root->links[1]->printNode();
 
     return 0;
 }
