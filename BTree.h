@@ -1,7 +1,6 @@
 #include <tuple>
 #include <iostream>
 #include <queue>
-#include <cmath>
 
 using namespace std;
 
@@ -105,18 +104,22 @@ class BTree{
 
 		}*/
 
-		void printNode(){
-			for(size_t i = 0; i < countK; ++i)
-				cout << keys[i] << ", ";
-			cout << '\b' << '\b';
+		void printNode(ostream& out = cout){
+			for(size_t i = 0; i < countK; ++i){
+				out << keys[i]; ", ";
+				if(i != countK-1)
+					out << ", ";
+			}
 		}
 	};
 
 	BNode* root;
 	size_t sz;
 	size_t numLevels;
+
 	tuple<BNode*, T, CODE> insert(BNode*, const T&);
 	tuple<BNode*, T, CODE> remove(BNode*, const T&);	// using immediate successor
+	void deleteTree(BNode* );
 
   public:
 	BTree();
@@ -124,7 +127,7 @@ class BTree{
 	// copy constructor and operator= here if you get time
 	~BTree();
 
-	void printTree() const;
+	void printTree(ostream& out = cout) const;
 	CODE insert(const T&);
 };
 
@@ -157,6 +160,15 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::ins
 	}
 }
 
+template <typename T, size_t M>
+void BTree<T,M>::deleteTree(BNode* node){
+	if(node){
+		for(int i = 0; i < node->countL; ++i)
+			deleteTree(node->links[i]);
+		delete node;
+	}
+}
+
 /////////////////////////////////		PUBLIC METHODS		  /////////////////////////////////////
 
 template <typename T, size_t M>
@@ -171,27 +183,27 @@ BTree<T,M>::BTree(const T& val):sz{1},numLevels{1}{
 
 template <typename T, size_t M>
 BTree<T,M>::~BTree(){
-	// need to make this a traversal, and delete individual nodes
-	delete root;
+	deleteTree(root);
 }
 
 template <typename T, size_t M>
-void BTree<T,M>::printTree() const{
+void BTree<T,M>::printTree(ostream& out) const{
 	if(root){
 		queue<BNode*> nodes;
 		nodes.push(root);
 		while(nodes.size()){
 			int levelCount = nodes.size();
 			while(levelCount){
-				cout << "[";
-				nodes.front()->printNode();
-				cout << "] ";
+				out << "[";
+				nodes.front()->printNode(out);
+				levelCount > 1 ? (out << "] "): (out << "]");
 				for(size_t i = 0; nodes.front()->links[i] != nullptr; ++i)
 					nodes.push(nodes.front()->links[i]);
 				nodes.pop();
 				--levelCount;
 			}
-			cout << endl;
+			if(nodes.size())
+				out << endl;
 		}
 	}
 }
