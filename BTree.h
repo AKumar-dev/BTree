@@ -1,5 +1,7 @@
 #include <tuple>
 #include <iostream>
+#include <queue>
+#include <cmath>
 
 using namespace std;
 
@@ -44,6 +46,7 @@ class BTree{
 			if(!countK){
 				keys[0] = val;
 				++countK;
+				countL += 2;
 				return tuple<BNode*,T,CODE>(nullptr, val, CODE::SUCCESS);
 			}
 			// else, insert the value in proper location
@@ -53,7 +56,7 @@ class BTree{
 				// shift over all the values that are smaller, and after loop insert val
 				while(index > 0 && keys[index-1] > val){
 					keys[index] = keys[index - 1];
-					links[index] = links[index - 1];
+					links[index+1] = links[index];
 					--index;
 				}
 				keys[index] = val;
@@ -103,16 +106,15 @@ class BTree{
 		}*/
 
 		void printNode(){
-			for(size_t i = 0; i < countK; ++i){
-				cout << "link: " << (links[i]? "valid" : "nullptr") << endl;
-				cout << "val: " << keys[i] << endl;
-			}
-			cout << "link: " << (links[countK]? "valid" : "nullptr") << endl;
+			for(size_t i = 0; i < countK; ++i)
+				cout << keys[i] << ", ";
+			cout << '\b' << '\b';
 		}
 	};
 
 	BNode* root;
 	size_t sz;
+	size_t numLevels;
 	tuple<BNode*, T, CODE> insert(BNode*, const T&);
 	tuple<BNode*, T, CODE> remove(BNode*, const T&);	// using immediate successor
 
@@ -122,7 +124,7 @@ class BTree{
 	// copy constructor and operator= here if you get time
 	~BTree();
 
-	void printTree();
+	void printTree() const;
 	CODE insert(const T&);
 };
 
@@ -158,10 +160,12 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::ins
 /////////////////////////////////		PUBLIC METHODS		  /////////////////////////////////////
 
 template <typename T, size_t M>
-BTree<T,M>::BTree():root{nullptr},sz{0}{}
+BTree<T,M>::BTree():sz{0},numLevels{1}{
+	root = new BNode();
+}
 
 template <typename T, size_t M>
-BTree<T,M>::BTree(const T& val):sz{1}{
+BTree<T,M>::BTree(const T& val):sz{1},numLevels{1}{
 	root = new BNode(val);
 }
 
@@ -171,5 +175,51 @@ BTree<T,M>::~BTree(){
 	delete root;
 }
 
-// in PUBLIC INSERT you need to check if sz = 0; if so, add to root and increment size. else, call the insert method
-	// this way, private INSERT won't get called on a null root, for which we don't have a case
+template <typename T, size_t M>
+void BTree<T,M>::printTree() const{
+	if(root){
+		queue<BNode*> nodes;
+		nodes.push(root);
+		while(nodes.size()){
+			int levelCount = nodes.size();
+			while(levelCount){
+				cout << "[";
+				nodes.front()->printNode();
+				cout << "] ";
+				for(size_t i = 0; nodes.front()->links[i] != nullptr; ++i)
+					nodes.push(nodes.front()->links[i]);
+				nodes.pop();
+				--levelCount;
+			}
+			cout << endl;
+		}
+	}
+}
+
+template <typename T, size_t M>
+typename BTree<T,M>::CODE BTree<T,M>::insert(const T& val){
+	if(sz == 0){	// if root is empty, just add to it
+		++sz;
+		return get<2>(root->add(val));
+		++sz;
+	}
+	else{	// tree already has values
+		tuple<BNode*,T,CODE> insertResult = insert(root, val);
+		if(get<2>(insertResult) == CODE::DUPLICATE)	//duplicate found, do nothing special
+			return CODE::DUPLICATE;
+		else if(get<2>(insertResult) == CODE::OVERFLOW){ //root returned overflow, must split
+			++sz;
+			++numLevels;
+			tuple<BNode*,T,CODE> splitResult = root->split();
+			BNode* newRoot = new BNode(get<1>(splitResult));
+			newRoot->links[0] = root;
+			newRoot->links[1] = get<0>(splitResult);
+			root = newRoot;
+			return CODE::SUCCESS;
+		}
+		else{	//success
+			++sz;
+			return CODE::SUCCESS;
+		}
+	}
+}
