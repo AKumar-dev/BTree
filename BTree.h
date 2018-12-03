@@ -98,6 +98,28 @@ class BTree{
 			return tuple<BNode*,T,CODE>(right, keys[median], CODE::SUCCESS);
 		}
 
+		//remove always happens from a leaf node
+		tuple<BNode*,T,CODE> remove(const T &val, BNode* node = nullptr){
+			int index = 0;
+			while(val >= keys[index] && index < countK)
+				++index;
+			if(val != keys[index - 1])
+				return tuple<BNode*,T,CODE>(nullptr, val, CODE::NOT_FOUND);
+			else{
+				while(index < countK){
+					keys[index - 1] = keys[index];
+					links[index - 1] = links[index];
+					++index;
+				}
+				links[index - 1] = links[index];    // THIS MIGHT BE A LITTLE SKETCH ! ! !
+				--countK;
+				--countL;
+				if(countK < (ceil(double(M)/2) - 1))
+					return tuple<BNode*,T,CODE>(this, val, CODE::UNDERFLOW);
+				return tuple<BNode*,T,CODE>(this, val, CODE::SUCCESS);
+			}
+		}
+
 		/*
 		// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
 		tuple<BNode*,T,CODE> merge(){
