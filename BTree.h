@@ -13,12 +13,14 @@ class BTree{
 	struct BNode{
 		size_t countL;     // count of links
 		size_t countK;     // count of keys
+		size_t minKeys;
 		T *keys;      	   // the size of this is M (M = order)
 		BNode* *links;     // the size of this is M + 1
 
 		BNode(){	// default constructor
 			countK = 0;
 			countL = 0;
+			minKeys = ceil(double(M)/2) - 1;
 			keys = new T[M];
 			links = new BNode*[M+1];
 			for(size_t i = 0; i <= M; ++i)	// intialize links to nullptr
@@ -114,7 +116,7 @@ class BTree{
 				links[index - 1] = links[index];    // THIS MIGHT BE A LITTLE SKETCH ! ! !
 				--countK;
 				--countL;
-				if(countK < (ceil(double(M)/2) - 1))
+				if(countK < minKeys)
 					return tuple<BNode*,T,CODE>(this, val, CODE::UNDERFLOW);
 				return tuple<BNode*,T,CODE>(this, val, CODE::SUCCESS);
 			}
@@ -122,19 +124,19 @@ class BTree{
 
 		tuple<BNode*,T,CODE> merge(BNode* &node, const T& parentVal){
 
-        // what if we call marge on the right side of the list? I can always call merge with the one on the left with right ptr passed in!
+			// what if we call marge on the right side of the list? I can always call merge with the one on the left with right ptr passed in!
 
-        this->keys[countK++] = parentVal;
-        this->links[countL++] = node->links[0];
-        size_t index = 0;
-        while(index < node->countK){
-            this->keys[countK++] = node->keys[index++];
-            this->links[countL++] = node->links[index];
-        }
-        delete node;
-        node = nullptr;
-        return tuple<BNode*,T,CODE> (this, parentVal, CODE::SUCCESS);
-    }
+			this->keys[countK++] = parentVal;
+			this->links[countL++] = node->links[0];
+			size_t index = 0;
+			while(index < node->countK){
+				this->keys[countK++] = node->keys[index++];
+				this->links[countL++] = node->links[index];
+			}
+			delete node;
+			node = nullptr;
+			return tuple<BNode*,T,CODE> (this, parentVal, CODE::SUCCESS);
+		}
 
 		void printNode(ostream& out = cout){
 			for(size_t i = 0; i < countK; ++i){
@@ -162,7 +164,7 @@ class BTree{
 
 	void printTree(ostream& out = cout) const;
 	CODE insert(const T&);
-	CODE insert(const T&);
+	CODE remove(const T&);
 };
 
 
@@ -197,21 +199,16 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::ins
 template <typename T, size_t M>
 tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::remove(BNode* &node, const T& val){
 	size_t index;
+	bool underflow = false;
+	tuple<BNode*,T,CODE> removeResult;
 
 	for(index = 0; index < node->countK; ++index){
-		if(node->keys[index] == val){
+		if(node->keys[index] == val){	// if value found
 			if(links[0]){	// if this is a non-leaf node
 				node->keys[index] = findMin(links[index+1]);
-				tuple<BNode*,T,CODE> removeResult =	remove(links[index+1], node->keys[index]);
-				if(get<2>(removeResult) == CODE::UNDERFLOW){
-					bool borrow = false;
-					if(index + 1 < countL - 1)	// try borrow right;
-					if(index > 0)				// do I need to check something with countK? try borrow left
-					if(!borrow){
-						;//merge the nodes
-						;//return based on how many 
-					}
-				}
+				removeResult =	remove(links[index+1], node->keys[index]);
+				if(get<2>(removeResult) == CODE::UNDERFLOW)
+					break;
 			}
 			else{	// this is a leaf node, safe to delete from here
 				return(node->remove(val));
@@ -219,14 +216,48 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 		}
 		// now we know which link to descend into, since we have encountered a >.
 		else if(node->keys[index] > val){
-			if(links[0])
-				tuple<BNode*,T,CODE> removeResult = remove(links[index], val);
-				// ... check for underflow, adjust accordingly ...
-			else
-				;//return not_found
+			if(links[0]){	// if non-leaf node
+				removeResult = remove(links[index], val);
+				if(get<2>(removeResult) == CODE::UNDERFLOW)
+					break;
+			}
+			else	// leaf-node, but val not found
+				return CODE::NOT_FOUND;
 		}
-		// what do I do about the ROOT???
 	}
+
+	//we had an underflow if we made it to this point!
+	if(index != 0){	// trying to find left sibling to borrow from
+		if(node->links[index - 1]->countK > minKeys){	// if left has enough keys
+			//add parent value
+			//link the right pointer of the left sibling at index 0
+			//set that last pointer to 
+		}
+	}
+
+	if(index != node->countK - 1){	// if the underflowing node not all the way to the right
+		if(node->links[index + 1]->countK > minKeys){
+			;//return whatever
+		}
+	}
+
+	tuple<BNode*,T,CODE> mergeResult;
+	// FIRST GET IT WORKING, OPTIMIZE LATER!
+	if(index == node->countK - 1){		// need to fix this check so I'm checking if its the last link, not the last value
+		mergeResult = node->links[index-1]->merge(node->links[index], node->keys[node->countK - 1]);
+		node->remove(node->keys[node->countK - 1]);
+		node->links[index] = get<0>(mergeResult);	// adds the correct child ptr to the node
+		if(node->countK < minKeys)
+			return tuple<BNode*,T,CODE>(this,val,CODE::UNDERFLOW); 
+	}
+	else{
+		mergeResult = node->links[index]->merge(node->links[index+1], node->keys[index+1]);
+		node->remove(node->keys[index+1]);
+		node->links[index] = get<0>(mergeResult);
+		if(node->countK < minKeys)
+			return tuple<BNode*,T,CODE>(this,val,CODE::UNDERFLOW);
+	}
+	return tuple<BNode*,T,CODE>(this,val,CODE::SUCCESS);
 }
 
 template <typename T, size_t M>
@@ -310,4 +341,18 @@ typename BTree<T,M>::CODE BTree<T,M>::insert(const T& val){
 			return CODE::SUCCESS;
 		}
 	}
+}
+
+template <typename T, size_t M>
+typename BTree<T,M>::CODE BTree<T,M>::remove(const T& val){
+	if(sz == 0)
+		return CODE::NOT_FOUND;
+	if(!root->countK){
+		if(root->links[0]){
+			BNode* oldRoot = root;
+			root = root->links[0];	// might need to change this logic if a different child is the non-null one
+			delete oldRoot;
+		}
+	}
+	--sz;
 }
