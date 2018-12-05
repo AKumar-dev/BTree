@@ -99,7 +99,7 @@ class BTree{
 		}
 
 		//remove always happens from a leaf node
-		tuple<BNode*,T,CODE> remove(const T &val, BNode* node = nullptr){
+		tuple<BNode*,T,CODE> remove(const T &val){
 			int index = 0;
 			while(val >= keys[index] && index < countK)
 				++index;
@@ -120,11 +120,21 @@ class BTree{
 			}
 		}
 
-		/*
-		// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!// TEST THIS FUNCTION FOR ALL CASES BEFORE YOU MOVE ON!!!
-		tuple<BNode*,T,CODE> merge(){
+		tuple<BNode*,T,CODE> merge(BNode* &node, const T& parentVal){
 
-		}*/
+        // what if we call marge on the right side of the list? I can always call merge with the one on the left with right ptr passed in!
+
+        this->keys[countK++] = parentVal;
+        this->links[countL++] = node->links[0];
+        size_t index = 0;
+        while(index < node->countK){
+            this->keys[countK++] = node->keys[index++];
+            this->links[countL++] = node->links[index];
+        }
+        delete node;
+        node = nullptr;
+        return tuple<BNode*,T,CODE> (this, parentVal, CODE::SUCCESS);
+    }
 
 		void printNode(ostream& out = cout){
 			for(size_t i = 0; i < countK; ++i){
@@ -140,8 +150,9 @@ class BTree{
 	size_t numLevels;
 
 	tuple<BNode*, T, CODE> insert(BNode*, const T&);
-	tuple<BNode*, T, CODE> remove(BNode*, const T&);	// using immediate successor
+	tuple<BNode*, T, CODE> remove(BNode*&, const T&);	// using immediate successor
 	void deleteTree(BNode* );
+	T findMin(BNode*);
 
   public:
 	BTree();
@@ -150,6 +161,7 @@ class BTree{
 	~BTree();
 
 	void printTree(ostream& out = cout) const;
+	CODE insert(const T&);
 	CODE insert(const T&);
 };
 
@@ -183,12 +195,54 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::ins
 }
 
 template <typename T, size_t M>
+tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::remove(BNode* &node, const T& val){
+	size_t index;
+
+	for(index = 0; index < node->countK; ++index){
+		if(node->keys[index] == val){
+			if(links[0]){	// if this is a non-leaf node
+				node->keys[index] = findMin(links[index+1]);
+				tuple<BNode*,T,CODE> removeResult =	remove(links[index+1], node->keys[index]);
+				if(get<2>(removeResult) == CODE::UNDERFLOW){
+					bool borrow = false;
+					if(index + 1 < countL - 1)	// try borrow right;
+					if(index > 0)				// do I need to check something with countK? try borrow left
+					if(!borrow){
+						;//merge the nodes
+						;//return based on how many 
+					}
+				}
+			}
+			else{	// this is a leaf node, safe to delete from here
+				return(node->remove(val));
+			}
+		}
+		// now we know which link to descend into, since we have encountered a >.
+		else if(node->keys[index] > val){
+			if(links[0])
+				tuple<BNode*,T,CODE> removeResult = remove(links[index], val);
+				// ... check for underflow, adjust accordingly ...
+			else
+				;//return not_found
+		}
+		// what do I do about the ROOT???
+	}
+}
+
+template <typename T, size_t M>
 void BTree<T,M>::deleteTree(BNode* node){
 	if(node){
 		for(int i = 0; i < node->countL; ++i)
 			deleteTree(node->links[i]);
 		delete node;
 	}
+}
+
+template <typename T, size_t M>
+T BTree<T,M>::findMin(BNode* node){
+	if(node->links[0])
+		return findMin(node->links[0]);
+	return node->keys[0];				// this will only be reached when we are at a leaf node
 }
 
 /////////////////////////////////		PUBLIC METHODS		  /////////////////////////////////////
