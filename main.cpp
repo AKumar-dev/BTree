@@ -8,7 +8,6 @@ using namespace std;
 // MIGHT HAVE TO FIX SOME OF THE DESTRUCTOR STUFF, CHECK VALGRIND
 int main(){
     BTree<int, 5> f;
-    BTree<int, 7> s;
 
     ifstream in("sampleIn");
     ofstream out("sampleOut");
@@ -17,8 +16,18 @@ int main(){
     while(in >> temp)
         f.insert(temp);
 
-    f.printTree(out);
+    f.printTree();
+    cout << endl << endl;
 
+    // f.remove(88);
+    // f.remove(99);
+    // f.remove(58);
+    // f.remove(70);
+    // f.remove(83);
+    f.remove(2);
+    cout << endl << endl;
+    f.printTree(cout);
+    cout << endl;
 
     return 0;
 }
