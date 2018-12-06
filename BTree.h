@@ -110,8 +110,8 @@ class BTree{
 					keys[index - 1] = keys[index];
 					links[index] = links[index+1]; // CHANGED from index-1 to index
 					++index;
-				}// remove the following line, cuz it'll always try to fill last spot with past the end
-				//links[index - 1] = links[index];    // THIS MIGHT BE A LITTLE SKETCH ! ! !
+				}
+				links[index] = nullptr;
 				--countK;
 				--countL;
 				if(countK < ceil(double(M)/2)-1)
@@ -238,7 +238,7 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 	//we had an underflow if we made it to this point!
 	if(index != 0){	// trying to find left sibling to borrow from
 		if(node->links[index - 1]->countK > minKeys){	// if left has enough keys
-			for(int i = node->links[index]->countK; i > 0; ++i){
+			for(int i = node->links[index]->countK; i > 0; --i){
 				node->links[index]->keys[i] = node->links[index]->keys[i-1];
 				node->links[index]->links[i+1] = node->links[index]->links[i];
 			}
@@ -344,7 +344,7 @@ void BTree<T,M>::printTree(ostream& out) const{
 				out << "[";
 				nodes.front()->printNode(out);
 				levelCount > 1 ? (out << "] "): (out << "]");
-				for(size_t i = 0; nodes.front()->links[i] != nullptr; ++i)
+				for(size_t i = 0; i < nodes.front()->countL && nodes.front()->links[i] != nullptr; ++i)
 					nodes.push(nodes.front()->links[i]);
 				nodes.pop();
 				--levelCount;
