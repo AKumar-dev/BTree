@@ -226,18 +226,51 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 		}
 	}
 
+	// in case the remove worked out fine
+	if(get<2>(removeResult) == CODE::SUCCESS || get<2>(removeResult) == CODE::NOT_FOUND)
+		return removeResult;
+
 	//we had an underflow if we made it to this point!
 	if(index != 0){	// trying to find left sibling to borrow from
 		if(node->links[index - 1]->countK > minKeys){	// if left has enough keys
-			//add parent value
-			//link the right pointer of the left sibling at index 0
-			//set that last pointer to 
+			for(int i = node->links[index]->countK; i > 0; ++i){
+				node->links[index]->keys[i] = node->links[index]->keys[i-1];
+				node->links[index]->links[i+1] = node->links[index]->links[i];
+			}
+			node->links[index]->links[1] = node->links[index]->links[0];
+			node->links[index]->links[0] = node->links[index-1]->links[node->links[index-1]->countK];
+			node->links[index]->countL++;
+			node->links[index]->keys[0] = node->keys[index-1];
+			node->links[index]->countK++;
+			node->keys[index - 1] = node->links[index-1]->keys[node->links[index-1]->countK-1];
+			node->links[index-1]->links[node->links[index-1]->countK] = nullptr;
+			node->links[index-1]->countK--;
+			node->links[index-1]->countL--;
+			return tuple<BNode*,T,CODE>(this,val,CODE::SUCCESS);
 		}
 	}
 
+
 	if(index != node->countK - 1){	// if the underflowing node not all the way to the right
-		if(node->links[index + 1]->countK > minKeys){
-			;//return whatever
+		if(node->links[index + 1]->countK > minKeys){ // now we are getting the 0th key from right side, and adding to end, not beginning
+		//also need to shift the values on the right node, not the node that is borrowing, since val will be places at the end
+			
+			node->links[index]->keys[node->links[index]->countK] = node->keys[index];
+			node->links[index]->countK++;
+			node->links[index]->links[node->links[index]->countL] = node->links[index+1]->links[0];
+			node->links[index]->countL++;
+			node->keys[index] = node->links[index+1]->keys[0];
+			node->links[index+1]->links[0] = nullptr;
+			
+			for(int i = 0; i < node->links[index+1]->countK; ++i){
+				node->links[index+1]->keys[i] = node->links[index+1]->keys[i+1];
+				node->links[index+1]->links[0] = node->links[index+1]->keys[i+1];
+			}
+			node->links[index+1]->links[node->links[index+1]->countK-1] = node->links[index+1]->links[node->links[index+1]->countK];
+			node->links[index+1]->countL--;
+			node->links[index+1]->countK--;
+			
+			return tuple<BNode*,T,CODE>(this,val,CODE::SUCCESS);
 		}
 	}
 
