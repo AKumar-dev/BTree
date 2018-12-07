@@ -206,9 +206,11 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 				node->keys[index] = findMin(node->links[index+1]);
 				removeResult =	remove(node->links[index+1], node->keys[index]);
 				if(get<2>(removeResult) == CODE::UNDERFLOW){
+					++index;
 					uflow = true;
 					break;
 				}
+				return removeResult;
 			}
 			else{	// this is a leaf node, safe to delete from here
 				return(node->remove(val));
@@ -235,9 +237,8 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 			return removeResult;
 	}
 
-	//we had an underflow if we made it to this point!
-	if(index != 0){	// trying to find left sibling to borrow from
-		if(node->links[index - 1]->countK > minKeys){	// if left has enough keys
+	if(index != 0){	// trying to find left sibling to borrow from		
+		if(node->links[index-1]->countK > minKeys){	// if left has enough keys
 			for(int i = node->links[index]->countK; i > 0; --i){
 				node->links[index]->keys[i] = node->links[index]->keys[i-1];
 				node->links[index]->links[i+1] = node->links[index]->links[i];
@@ -255,11 +256,8 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 		}
 	}
 
-	// looking at the wrong node's count, should be looking at child... or use countL
-	if(index != node->countL - 1){	// if the underflowing node not all the way to the right
-		if(node->links[index + 1]->countK > minKeys){ // now we are getting the 0th key from right side, and adding to end, not beginning
-		//also need to shift the values on the right node, not the node that is borrowing, since val will be places at the end
-			
+	if(index != node->countK){
+		if(node->links[index + 1]->countK > minKeys){
 			node->links[index]->keys[node->links[index]->countK] = node->keys[index];
 			node->links[index]->countK++;
 			node->links[index]->links[node->links[index]->countL] = node->links[index+1]->links[0];
@@ -269,7 +267,7 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 			
 			for(int i = 0; i < node->links[index+1]->countK; ++i){
 				node->links[index+1]->keys[i] = node->links[index+1]->keys[i+1];
-				node->links[index+1]->links[0] = node->links[index+1]->links[i+1];
+				node->links[index+1]->links[i] = node->links[index+1]->links[i+1];
 			}
 			node->links[index+1]->links[node->links[index+1]->countK-1] = node->links[index+1]->links[node->links[index+1]->countK];
 			node->links[index+1]->countL--;
@@ -284,14 +282,14 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 	if(index == node->countL - 1){		// need to fix this check so I'm checking if its the last link, not the last value
 		mergeResult = node->links[index-1]->merge(node->links[index], node->keys[node->countK - 1]);
 		node->remove(node->keys[node->countK - 1]);
-		node->links[index] = get<0>(mergeResult);	// adds the correct child ptr to the node
+		node->links[index-1] = get<0>(mergeResult);	// adds the correct child ptr to the node
 		if(node->countK < minKeys)
 			return tuple<BNode*,T,CODE>(node,val,CODE::UNDERFLOW); 
 	}	// above could also have issues with indexing
 	else{
 		mergeResult = node->links[index]->merge(node->links[index+1], node->keys[index]);	// should be @ index
 		node->remove(node->keys[index]);
-		node->links[index] = get<0>(mergeResult);
+		node->links[index] = get<0>(mergeResult);	// this seems redundant, happened in merge already
 		if(node->countK < minKeys)
 			return tuple<BNode*,T,CODE>(node,val,CODE::UNDERFLOW);
 	}
@@ -301,8 +299,10 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 template <typename T, size_t M>
 void BTree<T,M>::deleteTree(BNode* node){
 	if(node){
-		for(int i = 0; i < node->countL; ++i)
+		//cout << node->keys[0] << endl;
+		for(int i = 0; i < node->countL; ++i){
 			deleteTree(node->links[i]);
+		}
 		delete node;
 	}
 }
@@ -335,7 +335,7 @@ BTree<T,M>::~BTree(){
 
 template <typename T, size_t M>
 void BTree<T,M>::printTree(ostream& out) const{
-	if(root){
+	if(root && sz){
 		queue<BNode*> nodes;
 		nodes.push(root);
 		while(nodes.size()){
@@ -344,8 +344,11 @@ void BTree<T,M>::printTree(ostream& out) const{
 				out << "[";
 				nodes.front()->printNode(out);
 				levelCount > 1 ? (out << "] "): (out << "]");
-				for(size_t i = 0; i < nodes.front()->countL && nodes.front()->links[i] != nullptr; ++i)
+				for(size_t i = 0; i < nodes.front()->countL && nodes.front()->links[i] != nullptr; ++i){
+					out << i << "-";
 					nodes.push(nodes.front()->links[i]);
+				}
+				out << " ";
 				nodes.pop();
 				--levelCount;
 			}
@@ -387,14 +390,13 @@ typename BTree<T,M>::CODE BTree<T,M>::remove(const T& val){
 	if(sz == 0)
 		return CODE::NOT_FOUND;
 	tuple<BNode*,T,CODE> result = remove(root,val);
+	--sz;
 	if(!root->countK){
-		cout << "countK " << endl;
-		if(root->links[0]){
+		if(root->links[0] && sz){
 			BNode* oldRoot = root;
 			root = root->links[0];	// might need to change this logic if a different child is the non-null one
 			delete oldRoot;
 		}
 	}
-	--sz;
 	return get<2>(result);
 }

@@ -10,7 +10,6 @@ int main(){
 
     // 29 44 77 30 33 79 83 35 99 88 25 22 26 31 45 58 9 3 2 49 67 70
     ifstream in("sampleIn");
-    ofstream out("sampleOut");
     
     int temp;
     while(in >> temp)
@@ -23,16 +22,25 @@ int main(){
     // f.remove(58);
     // f.remove(70);
     // f.remove(83);
-    //f.remove(2);
-    f.remove(73);
+    // f.remove(2);
 
-    cout << endl << endl;
-    f.printTree(cout);
+     
+    ifstream in2("sampleIn");
+    int count = 0;
+    while(in2 >> temp){
+        ++count;
+        cout << endl << endl<<"remove " << temp << endl;
+        f.remove(temp);
+        f.printTree();
+        cout << "after-print, count = " << count << endl;
+        if(count == 12){  // 5 works, test 6
+            cout << "end-of-while" << endl;
+            break;
+        }
+        cout << "end-of-while" << endl;
+    }
 
-    f.remove(49);
-    cout << endl << endl;
-    f.printTree(cout);
-    cout << endl;
+    // for some reason, 937 is being copied over!
 
     return 0;
 }
