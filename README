@@ -1,5 +1,3 @@
-The writeup for this project is stored as "writeup.pdf"
-
 To execute this program, a few options have been provided:
 
 1) "make" - this compiles and runs the program
@@ -7,7 +5,3 @@ To execute this program, a few options have been provided:
 3) "make val" - this compiles the program and uses valgrind to check for memory leaks
 
 - The file used as the driver is command.txt, which is specified in the Makefile.
-
-Please let me know if you have any issues running this program.
-
-Akshay Kumar (ak1557)
