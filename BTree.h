@@ -42,6 +42,9 @@ class BTree{
 		
 		// add/insert a value into a BNode
 		tuple<BNode*,int,CODE> add(const T &val, BNode* node = nullptr){
+
+			// NEED TO DO DUPLICATE CHECKING IN THIS FUNCTION
+
 			// if the node is empty, insert val and return success
 			if(!countK){
 				keys[0] = val;
@@ -59,6 +62,7 @@ class BTree{
 					links[index+1] = links[index];
 					--index;
 				}
+
 				keys[index] = val;
 				links[index + 1] = node;
 				++countK;

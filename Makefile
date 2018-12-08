@@ -1,5 +1,5 @@
 all: compile
-	./a.out
+	./a.out command.txt
 
 compile:
 	g++ -g -std=c++11 main.cpp
