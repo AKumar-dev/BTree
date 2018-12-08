@@ -344,10 +344,8 @@ void BTree<T,M>::printTree(ostream& out) const{
 				out << "[";
 				nodes.front()->printNode(out);
 				levelCount > 1 ? (out << "] "): (out << "]");
-				for(size_t i = 0; i < nodes.front()->countL && nodes.front()->links[i] != nullptr; ++i){
-					out << i << "-";
+				for(size_t i = 0; i < nodes.front()->countL && nodes.front()->links[i] != nullptr; ++i)
 					nodes.push(nodes.front()->links[i]);
-				}
 				out << " ";
 				nodes.pop();
 				--levelCount;

@@ -6,41 +6,41 @@
 using namespace std;
 
 int main(){
-    BTree<int, 5> f;
 
-    // 29 44 77 30 33 79 83 35 99 88 25 22 26 31 45 58 9 3 2 49 67 70
+    BTree<int, 5> f;
     ifstream in("sampleIn");
     
     int temp;
-    while(in >> temp)
+    while(in >> temp){
+        cout << "insert: " << temp << endl;
         f.insert(temp);
+        f.printTree();
+        cout << endl << endl;
+    }
 
-    f.printTree();
-
-    // f.remove(88);
-    // f.remove(99);
-    // f.remove(58);
-    // f.remove(70);
-    // f.remove(83);
-    // f.remove(2);
-
-     
+    cout << endl << endl << "---------- FINISHED INSERTING ----------" << endl << endl;
+   
     ifstream in2("sampleIn");
     int count = 0;
     while(in2 >> temp){
         ++count;
-        cout << endl << endl<<"remove " << temp << endl;
+        cout << endl << endl<<"remove: " << temp << endl;
         f.remove(temp);
         f.printTree();
-        cout << "after-print, count = " << count << endl;
-        if(count == 12){  // 5 works, test 6
-            cout << "end-of-while" << endl;
-            break;
-        }
-        cout << "end-of-while" << endl;
     }
 
-    // for some reason, 937 is being copied over!
+    cout << endl << "adding 1,2,3,4,5 to same tree, so checking that structure holds after removing" << endl;
 
+    cout << endl;
+
+    f.insert(1);
+    f.insert(2);
+    f.insert(3);
+    f.insert(4);
+    f.insert(5);
+    
+    f.printTree();
+
+    cout << endl << endl;
     return 0;
 }
