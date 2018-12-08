@@ -9,7 +9,7 @@ template<typename T, size_t M = 5>
 class BTree{
   public:
 	// possible results prom operations
-	enum OP_RESULT{NOT_FOUND, FOUND, SUCCESS, DUPLICATE, OVERFLOW, UNDERFLOW};
+	enum OP_RESULT{NOT_FOUND, FOUND, SUCCESS, DUPLICATE, OVER_FLOW, UNDER_FLOW};
 
   private:
 	struct BNode{
@@ -72,9 +72,9 @@ class BTree{
 				++countK;
 				++countL;
 
-				// if overflow happens, return OVERFLOW so parent can call 'split'
+				// if overflow happens, return OVER_FLOW so parent can call 'split'
 				if(countK == M)
-					return tuple<BNode*,T,OP_RESULT>(nullptr, val, OP_RESULT::OVERFLOW);
+					return tuple<BNode*,T,OP_RESULT>(nullptr, val, OP_RESULT::OVER_FLOW);
 
 				return tuple<BNode*,T,OP_RESULT>(nullptr, val, OP_RESULT::SUCCESS);
         	}
@@ -127,7 +127,7 @@ class BTree{
 				--countK;
 				--countL;
 				if(countK < ceil(double(M)/2)-1)
-					return tuple<BNode*,T,OP_RESULT>(this, val, OP_RESULT::UNDERFLOW);
+					return tuple<BNode*,T,OP_RESULT>(this, val, OP_RESULT::UNDER_FLOW);
 				return tuple<BNode*,T,OP_RESULT>(this, val, OP_RESULT::SUCCESS);
 			}
 		}
@@ -225,7 +225,7 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::OP_RESULT> BTree<T,M>
 
 		// checks for overflow, and acts accordingly
 		tuple<BNode*,T,OP_RESULT> result = insert(node->links[index], val);
-		if(get<2>(result) == OP_RESULT::OVERFLOW){
+		if(get<2>(result) == OP_RESULT::OVER_FLOW){
 			tuple<BNode*,T,OP_RESULT> splitResult = node->links[index]->split();
 			return node->add(get<1>(splitResult), get<0>(splitResult)); //passes the result to above chain
 		}
@@ -246,7 +246,7 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::OP_RESULT> BTree<T,M>
 			if(node->links[0]){	// if this is an internal node
 				node->keys[index] = findMin(node->links[index+1]);
 				removeResult =	remove(node->links[index+1], node->keys[index]);
-				if(get<2>(removeResult) == OP_RESULT::UNDERFLOW){
+				if(get<2>(removeResult) == OP_RESULT::UNDER_FLOW){
 					// index is increased because the imm. successor is in the next slot over
 					++index;
 					uflow = true;
@@ -266,7 +266,7 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::OP_RESULT> BTree<T,M>
 	if(!uflow){
 		if(node->links[0]){	// if internal node
 			removeResult = remove(node->links[index], val);
-			if(get<2>(removeResult) == OP_RESULT::UNDERFLOW)
+			if(get<2>(removeResult) == OP_RESULT::UNDER_FLOW)
 				uflow = true;
 		}
 		else	// leaf node, but val not found
@@ -332,14 +332,14 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::OP_RESULT> BTree<T,M>
 		node->remove(node->keys[node->countK - 1]);
 		node->links[index-1] = get<0>(mergeResult);	// adds the correct child ptr to the node
 		if(node->countK < minKeys)
-			return tuple<BNode*,T,OP_RESULT>(node,val,OP_RESULT::UNDERFLOW); 
+			return tuple<BNode*,T,OP_RESULT>(node,val,OP_RESULT::UNDER_FLOW); 
 	}
 	else{
 		mergeResult = node->links[index]->merge(node->links[index+1], node->keys[index]);	// should be @ index
 		node->remove(node->keys[index]);
 		node->links[index] = get<0>(mergeResult);	// this seems redundant, happened in merge already
 		if(node->countK < minKeys)
-			return tuple<BNode*,T,OP_RESULT>(node,val,OP_RESULT::UNDERFLOW);
+			return tuple<BNode*,T,OP_RESULT>(node,val,OP_RESULT::UNDER_FLOW);
 	}
 	return tuple<BNode*,T,OP_RESULT>(node,val,OP_RESULT::SUCCESS);
 }
@@ -437,7 +437,7 @@ typename BTree<T,M>::OP_RESULT BTree<T,M>::insert(const T& val){
 			return OP_RESULT::DUPLICATE;
 		
 		// when root overflows, split is called and new root is created
-		else if(get<2>(insertResult) == OP_RESULT::OVERFLOW){
+		else if(get<2>(insertResult) == OP_RESULT::OVER_FLOW){
 			++sz;
 			tuple<BNode*,T,OP_RESULT> splitResult = root->split();
 			BNode* newRoot = new BNode(get<1>(splitResult));
