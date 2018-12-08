@@ -53,7 +53,9 @@ int main(int argc, char *argv[]){
             else if(command == 'S'){
                 int value;
                 inputFile >> value;
-                // STILL NEED TO DEFINE THE SEARCH FUNCTION !_!_!_!_!_!_!_!_!_!_!_!_!_!_!_
+                if(tree.search(value) == BTree<int,5>::CODE::NOT_FOUND)
+                    cout << "VALUE NOT FOUND" << endl;
+                cout << endl;
             }
             else if(command == 'P'){
                 tree.printTree();

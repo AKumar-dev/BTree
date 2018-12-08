@@ -8,7 +8,7 @@ using namespace std;
 template<typename T, size_t M = 5>
 class BTree{
   public:
-	enum CODE{NOT_FOUND, SUCCESS, DUPLICATE, OVERFLOW, UNDERFLOW};
+	enum CODE{NOT_FOUND, FOUND, SUCCESS, DUPLICATE, OVERFLOW, UNDERFLOW};
 
   private:
 	struct BNode{
@@ -41,7 +41,7 @@ class BTree{
 		}		
 		
 		// add/insert a value into a BNode
-		tuple<BNode*,int,CODE> add(const T &val, BNode* node = nullptr){
+		tuple<BNode*,T,CODE> add(const T &val, BNode* node = nullptr){
 
 			// NEED TO DO DUPLICATE CHECKING IN THIS FUNCTION
 
@@ -55,7 +55,7 @@ class BTree{
 			// else, insert the value in proper location
 			else{
 
-				for(int i = 0; i < countK; ++i)
+				for(size_t i = 0; i < countK; ++i)
 					if(keys[i] == val)
 						return tuple<BNode*,T,CODE>(nullptr,val,CODE::DUPLICATE);
 
@@ -109,7 +109,7 @@ class BTree{
 		}
 
 		tuple<BNode*,T,CODE> remove(const T &val){
-			int index = 0;
+			size_t index = 0;
 			while(val >= keys[index] && index < countK)
 				++index;
 			if(val != keys[index - 1])
@@ -158,6 +158,7 @@ class BTree{
 	size_t sz;
 	size_t minKeys;
 
+	tuple<BNode*, T, CODE> search(BNode*, const T&, ostream &out);
 	tuple<BNode*, T, CODE> insert(BNode*, const T&);
 	tuple<BNode*, T, CODE> remove(BNode*&, const T&);	// using immediate successor
 	void deleteTree(BNode* );
@@ -171,12 +172,34 @@ class BTree{
 
 	size_t size() const;
 	void printTree(ostream& out = cout) const;
+	CODE search(const T&, ostream &out = cout);
 	CODE insert(const T&);
 	CODE remove(const T&);
 };
 
 
 /////////////////////////////////		PRIVATE METHODS		  /////////////////////////////////////
+
+template <typename T, size_t M>
+tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::search(BNode* node, const T& val, ostream &out){
+	if(!node)
+		return tuple<BNode*,T,CODE>(node, val, CODE::NOT_FOUND);
+
+	size_t index;
+	for(index = 0; index < node->countK; ++index){
+		if(node->keys[index] == val){
+			out << node->keys[index];
+			return tuple<BNode*,T,CODE>(node, val, CODE::FOUND);
+		}
+		if(node->keys[index] > val){
+			out << node->keys[index] << " -> ";
+			return search(node->links[index], val, out);
+		}
+		out << node->keys[index] << " -> ";
+	}
+	return search(node->links[node->countK], val, out);
+}
+
 
 template <typename T, size_t M>
 tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::insert(BNode* node, const T& val){
@@ -249,7 +272,7 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 
 	if(index != 0){	// trying to find left sibling to borrow from		
 		if(node->links[index-1]->countK > minKeys){	// if left has enough keys
-			for(int i = node->links[index]->countK; i > 0; --i){
+			for(size_t i = node->links[index]->countK; i > 0; --i){
 				node->links[index]->keys[i] = node->links[index]->keys[i-1];
 				node->links[index]->links[i+1] = node->links[index]->links[i];
 			}
@@ -275,7 +298,7 @@ tuple<typename BTree<T,M>::BNode*, T, typename BTree<T,M>::CODE> BTree<T,M>::rem
 			node->keys[index] = node->links[index+1]->keys[0];
 			node->links[index+1]->links[0] = nullptr;
 			
-			for(int i = 0; i < node->links[index+1]->countK; ++i){
+			for(size_t i = 0; i < node->links[index+1]->countK; ++i){
 				node->links[index+1]->keys[i] = node->links[index+1]->keys[i+1];
 				node->links[index+1]->links[i] = node->links[index+1]->links[i+1];
 			}
@@ -310,7 +333,7 @@ template <typename T, size_t M>
 void BTree<T,M>::deleteTree(BNode* node){
 	if(node){
 		//cout << node->keys[0] << endl;
-		for(int i = 0; i < node->countL; ++i){
+		for(size_t i = 0; i < node->countL; ++i){
 			deleteTree(node->links[i]);
 		}
 		delete node;
@@ -321,7 +344,7 @@ template <typename T, size_t M>
 T BTree<T,M>::findMin(BNode* node){
 	if(node->links[0])
 		return findMin(node->links[0]);
-	return node->keys[0];				// this will only be reached when we are at a leaf node
+	return node->keys[0];	// this will only be reached when we are at a leaf node
 }
 
 /////////////////////////////////		PUBLIC METHODS		  /////////////////////////////////////
@@ -354,7 +377,7 @@ void BTree<T,M>::printTree(ostream& out) const{
 		queue<BNode*> nodes;
 		nodes.push(root);
 		while(nodes.size()){
-			int levelCount = nodes.size();
+			size_t levelCount = nodes.size();
 			while(levelCount){
 				out << "[";
 				nodes.front()->printNode(out);
@@ -369,6 +392,13 @@ void BTree<T,M>::printTree(ostream& out) const{
 				out << endl;
 		}
 	}
+}
+
+template <typename T, size_t M>
+typename BTree<T,M>::CODE BTree<T,M>::search(const T& val, ostream &out){
+	if(sz == 0)
+		return CODE::NOT_FOUND;
+	return get<2>(search(root, val, out));
 }
 
 template <typename T, size_t M>
