@@ -54,6 +54,11 @@ class BTree{
 			}
 			// else, insert the value in proper location
 			else{
+
+				for(int i = 0; i < countK; ++i)
+					if(keys[i] == val)
+						return tuple<BNode*,T,CODE>(nullptr,val,CODE::DUPLICATE);
+
 				size_t index = countK;
 
 				// shift over all the values that are smaller, and after loop insert val
@@ -164,6 +169,7 @@ class BTree{
 	// copy constructor and operator= here if you get time
 	~BTree();
 
+	size_t size() const;
 	void printTree(ostream& out = cout) const;
 	CODE insert(const T&);
 	CODE remove(const T&);
@@ -338,6 +344,11 @@ BTree<T,M>::~BTree(){
 }
 
 template <typename T, size_t M>
+size_t BTree<T,M>::size() const{
+	return sz;
+}
+
+template <typename T, size_t M>
 void BTree<T,M>::printTree(ostream& out) const{
 	if(root && sz){
 		queue<BNode*> nodes;
@@ -365,7 +376,6 @@ typename BTree<T,M>::CODE BTree<T,M>::insert(const T& val){
 	if(sz == 0){	// if root is empty, just add to it
 		++sz;
 		return get<2>(root->add(val));
-		++sz;
 	}
 	else{	// tree already has values
 		tuple<BNode*,T,CODE> insertResult = insert(root, val);
@@ -392,7 +402,10 @@ typename BTree<T,M>::CODE BTree<T,M>::remove(const T& val){
 	if(sz == 0)
 		return CODE::NOT_FOUND;
 	tuple<BNode*,T,CODE> result = remove(root,val);
-	--sz;
+	
+	if(get<2>(result) != CODE::NOT_FOUND)
+		--sz;
+	
 	if(!root->countK){
 		if(root->links[0] && sz){
 			BNode* oldRoot = root;
