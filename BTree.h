@@ -149,7 +149,7 @@ class BTree{
 		// print a given node, left to right
 		void printNode(ostream& out = cout){
 			for(size_t i = 0; i < countK; ++i){
-				out << keys[i]; ", ";
+				out << keys[i];
 				if(i != countK-1)
 					out << ", ";
 			}
