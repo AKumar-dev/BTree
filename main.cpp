@@ -10,8 +10,8 @@ void loadFile(BTree<T,M> &tree, const string &filename){
     if(file){
         int value;
         while(file >> value){
-            typename BTree<T,M>::CODE test;
-            if((test = tree.insert(value)) == BTree<T,M>::CODE::DUPLICATE){
+            typename BTree<T,M>::OP_RESULT test;
+            if((test = tree.insert(value)) == BTree<T,M>::OP_RESULT::DUPLICATE){
                 cout << "DUPLICATE found, " << value << " not inserted." << endl;
             };
         }
@@ -42,21 +42,21 @@ int main(int argc, char *argv[]){
                 int value;
                 inputFile >> value;
                 cout << "inserting: " << value << endl;
-                if(tree.insert(value) == BTree<int,5>::CODE::DUPLICATE)
+                if(tree.insert(value) == BTree<int,5>::OP_RESULT::DUPLICATE)
                     cout << "duplicate found, " << value << " not inserted." << endl;
             }
             else if(command == 'D'){
                 int value;
                 inputFile >> value;
                 cout << "removing: " << value << endl;
-                if(tree.remove(value) == BTree<int,5>::CODE::NOT_FOUND)
+                if(tree.remove(value) == BTree<int,5>::OP_RESULT::NOT_FOUND)
                     cout << " * " << value << " not found" << endl << endl;
             }
             else if(command == 'S'){
                 int value;
                 inputFile >> value;
                 cout << "searching for " << value << ": " << endl;
-                if(tree.search(value) == BTree<int,5>::CODE::NOT_FOUND)
+                if(tree.search(value) == BTree<int,5>::OP_RESULT::NOT_FOUND)
                     cout << "VALUE NOT FOUND" << endl;
                 cout << endl;
             }
