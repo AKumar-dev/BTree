@@ -11,7 +11,11 @@
 ### COMMANDS to place in command.txt:
 
  load file   - "L: filename"
+ 
  print tree  - "P:"
+ 
  insert key  - "A: key"
+ 
  delete key  - "D: key"
+ 
  terminate   - "T:"
